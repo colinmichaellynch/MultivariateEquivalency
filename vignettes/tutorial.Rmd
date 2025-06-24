@@ -1,8 +1,8 @@
 ---
-title: "tutorial"
+title: "Multivariate Equivalency and Experimental Design Tutorial"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{tutorial}
+  %\VignetteIndexEntry{Multivariate Equivalency and Experimental Design Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,4 +16,164 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(MultivariateEquivalency)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+library(viridis)
+library(ggpubr)
+library(paletteer)
+library(parallel)
+library(foreach)
+library(doParallel)
+library(Matrix)
+```
+
+```{r}
+# Load reference process data from package's extdata directory
+reference_path <- system.file("extdata", "referenceProcess.csv", package = "MultivariateEquivalency")
+referenceProcess <- read.csv(reference_path)
+
+# Check process stability
+outOfControlCount <- multivariateProcessStability(referenceProcess)
+print(outOfControlCount)
+paste("# Out of Control Points:", outOfControlCount)
+
+if(outOfControlCount > 0){
+  stop("The process is not stable. Do not continue.")
+}
+
+```
+
+```{r}
+# Set Parameters
+b <- 8             # number of bins
+alpha <- 0.01      # significance level
+simulations <- 10  # number of rho values
+iterations <- 10   # simulations per rho
+varNumber <- ncol(referenceProcess)
+lambdaVec <- seq(0.1, 0.25, by = 0.05)
+varVec <- seq(1, 49, by = 5)
+nVec <- seq(10, 350, by = 25)
+delta <- 0.02
+omega <- 1
+
+```
+
+```{r}
+#Extract Bin Limits and Correlations
+referenceLimits <- binLimits(referenceProcess, b)
+refCor <- cor(referenceProcess)
+lowerCor <- min(refCor)
+upperCor <- max(refCor[refCor < 1])
+
+
+```
+
+```{r}
+# Power Analysis (Case 1: Given λ and n, find power)
+n <- 40
+lambda <- 0.25
+powerThreshold <- NULL
+
+data <- multivariatePowerAnalysis(
+  powerThreshold, lambda, n, alpha, b,
+  lowerCor, upperCor, lambdaVec, varVec, nVec,
+  simulations, iterations
+)
+
+data$UnitCost <- omega * n + n * data$variableNumber * delta * omega
+data$minFlag <- data$Power == min(data$Power[data$Power > 0.8])
+
+ggplot(data, aes(x = UnitCost, y = Power)) +
+  geom_point(size = 3) +
+  geom_point(data = subset(data, minFlag), shape = 21, size = 5, stroke = 1.2, fill = NA, color = "forestgreen") +
+  scale_color_viridis_c(direction = -1) +
+  theme_bw(base_size = 14) +
+  labs(x = "Unit Cost", y = "Power")
+
+variableNumber <- data$variableNumber[min(which(data$Power > 0.8))]
+paste("Final Design: n = ", n, ", p = ", variableNumber)
+
+```
+
+```{r}
+# Power Analysis (Case 2: Given λ and power, find n)
+n <- NULL
+powerThreshold <- 0.8
+
+data <- multivariatePowerAnalysis(
+  powerThreshold, lambda, n, alpha, b,
+  lowerCor, upperCor, lambdaVec, varVec, nVec,
+  simulations, iterations
+)
+
+data$UnitCost <- omega * data$n + data$n * data$variableNumber * delta * omega
+data$minFlag <- data$UnitCost == min(data$UnitCost)
+
+ggplot(data, aes(x = n, y = variableNumber, color = UnitCost)) +
+  geom_point(size = 3) +
+  geom_point(data = subset(data, minFlag), shape = 21, size = 5, stroke = 1.2, fill = NA, color = "forestgreen") +
+  scale_color_viridis_c(direction = -1) +
+  theme_bw(base_size = 14) +
+  labs(x = "Sample Size (n)", y = "Number of Variables (p)")
+
+variableNumber <- data$variableNumber[which.min(data$UnitCost)]
+n <- round(data$n[which.min(data$UnitCost)])
+paste("Final Design: n = ", n, ", p = ", variableNumber)
+
+
+```
+
+```{r}
+# Power Analysis (Case 3: Given n and power, find λ)
+n <- 100
+lambda <- NULL
+
+data <- multivariatePowerAnalysis(
+  powerThreshold, lambda, n, alpha, b,
+  lowerCor, upperCor, lambdaVec, varVec, nVec,
+  simulations, iterations
+)
+
+data$UnitCost <- omega * data$nArtifact + data$nArtifact * data$variableNumber * delta * omega
+
+min_points <- data %>%
+  group_by(lambda) %>%
+  slice_min(UnitCost, with_ties = FALSE)
+
+ggplot(data, aes(x = UnitCost, y = lambda)) +
+  geom_point(size = 3) +
+  geom_point(data = min_points, shape = 21, size = 5, stroke = 1.2, fill = NA, color = "forestgreen") +
+  scale_color_viridis_c(direction = -1) +
+  theme_bw(base_size = 14) +
+  labs(x = "Unit Cost", y = "Effect Size")
+
+paste("Final Design(s): n = ", round(min_points$nArtifact), ", p = ", min_points$variableNumber)
+
+```
+
+```{r}
+# Estimate Monetary Cost
+n <- round(min_points$nArtifact)
+p <- min_points$variableNumber[1]
+omega <- 1000
+monetary_cost_of_experiment(p, n, delta, omega)
+
+```
+
+```{r}
+# Equivalency Testing
+# Load candidate datasets
+equiv_path <- system.file("extdata", "candidateProcessEquivalent.csv", package = "MultivariateEquivalency")
+notequiv_path <- system.file("extdata", "candidateProcessNotEquivalent.csv", package = "MultivariateEquivalency")
+candidateProcessEquivalent <- read.csv(equiv_path)
+candidateProcessNotEquivalent <- read.csv(notequiv_path)
+
+# Check equivalency
+result1 <- multivariateEquivalency(referenceLimits, candidateProcessEquivalent, b)
+paste("Reference and Candidate Distributions Are: ", result1$equivalent[1])
+
+result2 <- multivariateEquivalency(referenceLimits, candidateProcessNotEquivalent, b)
+paste("Reference and Candidate Distributions Are: ", result2$equivalent[1])
+
 ```
