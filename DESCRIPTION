@@ -1,0 +1,10 @@
+Package: MultivariateEquivalency
+Title: What the Package Does (MULTIVARIATE EQUIVALENCY AND POWER ANALYSIS USING CRAMER'S V and TRUNCATED GEOMETRIC DISTRIBUTIONS)
+Version: 0.0.0.9000
+Authors@R: 
+    person("Colin", "Lynch", , "cmlynch2@asu.edu", role = "cre")
+Description: What the package does (one paragraph).
+License: `use_mit_license()`
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
