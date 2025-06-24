@@ -95,13 +95,9 @@ candidate <- read.csv(cand_path)
 
 # Run equivalency test
 multivariateEquivalency(bins, candidate, b = 8)
-
+```
 
 ---
 
-## 📄 License
-
-```markdown
-## 📄 License
-
+## License
 This package is released under the **MIT License**.
