@@ -46,7 +46,7 @@ install.packages("devtools")
 
 # Install from GitHub
 devtools::install_github("colinmichaellynch/MultivariateEquivalency", build_vignettes = TRUE)
-
+```
 ## Running the Tutorial
 
 This package includes a full tutorial vignette that walks through:
@@ -63,7 +63,7 @@ To open the tutorial:
 browseVignettes("MultivariateEquivalency")
 # or
 vignette("tutorial", package = "MultivariateEquivalency")
-
+```
 
 ---
 
