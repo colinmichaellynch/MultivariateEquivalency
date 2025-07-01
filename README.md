@@ -1,12 +1,12 @@
 # MultivariateEquivalency
 
-**Multivariate Equivalency and Power Analysis Using Cramér’s V and Truncated Geometric Distributions**
+**Determining the Equivalency of 3D Manufactured Parts with Respect to Multiple Variables and Power Analyses for Optimal Experimental Design**
 
 ---
 
 ## Overview
 
-The `MultivariateEquivalency` package provides tools for determining **statistical equivalency between multivariate distributions**, particularly when features are binned into ordinal categories. It is designed to support:
+The `MultivariateEquivalency` package provides tools for determining **statistical equivalency between multivariate distributions**, which is meant to determine whether or not two different processes produce equivalent parts. It is designed to support:
 
 - **Equivalency testing** using multivariate generalizations of Cramér’s V  
 - **Power analysis** for determining optimal experimental design parameters (e.g., sample size, number of variables)  
