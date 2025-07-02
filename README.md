@@ -13,7 +13,7 @@ The `MultivariateEquivalency` package provides tools for determining **statistic
 - **Cost modeling** for estimating the monetary burden of proposed experiments  
 - **Process stability test** of multivariate processes using Hotelling’s \( T^2 \)
 
-This package is especially suited for high-dimensional data common in process monitoring and experimental validation contexts (e.g., additive manufacturing, quality control). For further information on the scope and underlying workings of this package, see Lynch et al. (paper). 
+This package is especially suited for high-dimensional data common in process monitoring and experimental validation contexts (e.g., additive manufacturing, quality control). For further information on the scope and underlying workings of this package, see Lynch et al. (paper). A big thank you to Cesar Gomez Guillen (https://github.com/cfgomezguil) for helping to optimize this code. I also want to thank Brenda Valdez Mesta for testing the code and for providing helpful insights.    
 
 ---
 
